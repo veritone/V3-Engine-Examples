@@ -1,7 +1,7 @@
 {
   "engineId": "9a7ec338-0297-48cc-90e2-60c4f16e96d5",
-  "url": "Enter your engine URL",
-  "category": "Enter your engine category",
+  "url": "Enter your engine URL if you have one",
+  "category": "keyword",
   "externalCalls": [],
   "outputFormats": [
     "application/json"
