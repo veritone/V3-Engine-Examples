@@ -1,14 +1,14 @@
 {
   "name": "hello-world",
   "version": "1.0.0",
-  "description": "",
+  "description": "Cognitive engine example for aiWARE V3F",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Veritone",
+  "license": "Apache 2.0",
   "dependencies": {
     "express": "^4.17.1",
     "multer": "^1.4.1"
