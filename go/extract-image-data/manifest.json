@@ -1,0 +1,18 @@
+{
+  "engineId": "YOUR-ENGINE-ID-HERE",
+  "url": "https://github.com/veritone/engine-toolkit/tree/master/engine/examples/exif",
+  "category": "Automation",
+  "externalCalls": [],
+  "outputFormats": [
+    "application/json"
+  ],
+  "clusterSize": "small",
+  "initialConcurrency": 50,
+  "maxConcurrency": 50,
+  "preferredInputFormat": "image/jpeg",
+  "supportedInputFormats": [
+    "image/jpeg",
+    "image/tiff"
+  ],
+  "engineMode": "chunk"
+}
