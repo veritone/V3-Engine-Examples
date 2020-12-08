@@ -1,6 +1,6 @@
 {
   "engineId": "YOUR-ENGINE-ID-HERE",
-  "url": "https://github.com/veritone/engine-toolkit/tree/master/engine/examples/exif",
+  "url": "https://github.com/veritone/V3-Engine-Examples/tree/master/go/extract-image-data",
   "category": "Automation",
   "externalCalls": [],
   "outputFormats": [
