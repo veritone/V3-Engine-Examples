@@ -11,7 +11,7 @@ let server = app.listen( 8080 );
 server.setTimeout( 10 * 60 * 1000 );
 
 // READY WEBHOOK
-app.get('/readyz', (req, res) => {
+app.get('/ready', (req, res) => {
     res.status(200).send('OK');
 });
 

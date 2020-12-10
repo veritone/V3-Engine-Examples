@@ -14,7 +14,7 @@ RUN apk update \
   && apk add --no-cache libc6-compat
 RUN npm install
 
-ENV VERITONE_WEBHOOK_READY="http://0.0.0.0:8080/readyz"
+ENV VERITONE_WEBHOOK_READY="http://0.0.0.0:8080/ready"
 ENV VERITONE_WEBHOOK_PROCESS="http://0.0.0.0:8080/process"
 
 COPY --from=vt-engine-toolkit /opt/aiware/engine /opt/aiware/engine
