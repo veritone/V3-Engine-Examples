@@ -17,63 +17,70 @@ entire document has a `sentiment` analysis at the root level.
 | __Class__: | Text |
 | __Category__: | Sentiment |
 
-## Example
+## Example TEXT file
 
-Sample Input: 
+### Input: 
+
+```
+That's pretty good! But people still don't like it.
+```
+
+### Output:
 
 ```
 {
-    "series": [
-        {
-            "words": [
-                {
-                    "word": "That's pretty good."
-                }
-            ],
-        },
-        {
-            "words": [
-                {
-                    "word": "I like this a lot."
-                }
-            ]
-        }
-    ],
+  'sentiment': {'positiveValue': 0.441, 'negativeValue': 0.145}, 
+  'object': [
+    {'type': 'text', 'text': "That's pretty good !", 'sentiment': {'positiveValue': 0.865, 'negativeValue': 0.0}}, 
+    {'type': 'text', 'text': "But people still don't like it .", 'sentiment': {'positiveValue': 0.0, 'negativeValue': 0.297}}
+  ] 
 }
 ```
 
-Sample Output:
+## Example JSON file
+
+### Input: 
 
 ```
 {
-    "sentiment": {
-        "negativeValue": 0.0,
-        "positiveValue": 0.741
-    },
-    "series": [
-        {
-            "sentiment": {
-                "negativeValue": 0.0,
-                "positiveValue": 0.859
-            },
-            "words": [
-                {
-                    "word": "That's pretty good."
-                }
-            ],
-        },
-        {
-            "sentiment": {
-                "negativeValue": 0.0,
-                "positiveValue": 0.556
-            },
-            "words": [
-                {
-                    "word": "I like this a lot."
-                }
-            ]
-        }
-    ],
+  "series": [
+    {"words": [{"word": "That's"}], },
+    {"words": [{"word": "pretty"}], },
+    {"words": [{"word": "good"}], },
+    {"words": [{"word": "!"}], },
+    {"words": [{"word": "But"}], },
+    {"words": [{"word": "people"}], },
+    {"words": [{"word": "still"}], },
+    {"words": [{"word": "don't"}], },
+    {"words": [{"word": "like"}], },
+    {"words": [{"word": "it"}], },
+    {"words": [{"word": "."}], },
+  ]
+}
+```
+
+### Output:
+
+```
+{
+  'sentiment': {'positiveValue': 0.441, 'negativeValue': 0.145}, 
+  'object': [
+    {'type': 'text', 'text': "That's pretty good !", 'sentiment': {'positiveValue': 0.865, 'negativeValue': 0.0}}, 
+    {'type': 'text', 'text': "But people still don't like it .", 'sentiment': {'positiveValue': 0.0, 'negativeValue': 0.297}}
+  ],
+  'series': [
+    {'words': [{'word': "That's"}], 'sentiment': {'positiveValue': 0.0, 'negativeValue': 0.0}}, 
+    {'words': [{'word': 'pretty'}], 'sentiment': {'positiveValue': 1.0, 'negativeValue': 0.0}}, 
+    {'words': [{'word': 'good'}], 'sentiment': {'positiveValue': 1.0, 'negativeValue': 0.0}}, 
+    {'words': [{'word': '!'}], 'sentiment': {'positiveValue': 0.0, 'negativeValue': 0.0}}, 
+    {'words': [{'word': 'But'}], 'sentiment': {'positiveValue': 0.0, 'negativeValue': 0.0}}, 
+    {'words': [{'word': 'people'}], 'sentiment': {'positiveValue': 0.0, 'negativeValue': 0.0}}, 
+    {'words': [{'word': 'still'}], 'sentiment': {'positiveValue': 0.0, 'negativeValue': 0.0}}, 
+    {'words': [{'word': "don't"}], 'sentiment': {'positiveValue': 0.0, 'negativeValue': 0.0}}, 
+    {'words': [{'word': 'like'}], 'sentiment': {'positiveValue': 1.0, 'negativeValue': 0.0}}, 
+    {'words': [{'word': 'it'}], 'sentiment': {'positiveValue': 0.0, 'negativeValue': 0.0}}, 
+    {'words': [{'word': '.'}], 'sentiment': {'positiveValue': 0.0, 'negativeValue': 0.0}}
+  ] 
 }
 ```
 
