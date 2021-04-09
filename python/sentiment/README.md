@@ -149,7 +149,8 @@ After you have pushed your engine to the docker.veritone.com repository.
 
 ### Locally
 
-You can test the engine locally by running `make up-test` and going to http://localhost:9090/ 
+You can test the engine locally by running `make up-test` and going to http://localhost:9090/.
+Fill out the MIME type, and cacheURI fields (cacheURI is under "Set advanced fields") and click "Submit request"
 
 ### In the Veritone ecosystem
 

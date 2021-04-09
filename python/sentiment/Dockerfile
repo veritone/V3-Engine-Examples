@@ -20,6 +20,7 @@ ENV LANG=C.UTF-8
 
 ENV VERITONE_WEBHOOK_READY="http://0.0.0.0:8082/ready"
 ENV VERITONE_WEBHOOK_PROCESS="http://0.0.0.0:8082/process"
+ENV VERITONE_DISABLE_CHUNK_DOWNLOAD=true
 
 ADD manifest.json /var/manifest.json
 
