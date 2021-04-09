@@ -1,0 +1,4 @@
+nltk>=3.5
+flask>=1.1
+pytest>=6.2
+requests>=2.7

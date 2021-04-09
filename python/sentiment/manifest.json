@@ -1,0 +1,13 @@
+{
+  "engineId": "62b8479d-46d1-4abc-b79c-39426024679e",
+  "url": "https://github.com/veritone/V3-Engine-Examples/python/sentiment",
+  "category": "Sentiment",
+  "externalCalls": [],
+  "outputFormats": ["application/json"],
+  "clusterSize": "small",
+  "initialConcurrency": 50,
+  "maxConcurrency": 50,
+  "preferredInputFormat": "text/plain",
+  "supportedInputFormats": ["text/plain", "application/json"],
+  "engineMode": "chunk"
+}
