@@ -36,7 +36,10 @@ def process():
             analysis_type = payload['analyze']
             app.logger.info("Setting analyze to '{}'".format(analysis_type))
     except Exception as e:
-        pass
+        app.logger.warn(
+            "Could not read 'analyze' option from payload: {}".format(e))
+        app.logger.warn(
+            "Using default analysis of word, sentence, and document")
 
     # read the input mime type
     mime_type = request.form.get('chunkMimeType')
@@ -72,14 +75,30 @@ def process():
 
 # Convert stream of bytes to a text string and process it
 def process_bytestream(bytes, analysis_type):
-    return process_text(bytes.decode('utf-8'), analysis_type)
+    """Perform sentiment analysis on a string.
 
-# Process a stream of text by splitting into sentences, and analysing every sentence.
-# The output will be an array of objects, where each object contains a sentence from the
-# input document and the sentiment analysis for the sentence
+    See process_text for more information.
+    """
+
+    return process_text(bytes.decode('utf-8'), analysis_type)
 
 
 def process_text(text, analysis_type):
+    """Perform sentiment analysis on a string.
+
+    Splits the string into sentences and performs analysis on each sentence. Also analyzes the
+    string as a whole.
+
+    text -- Text to analyze
+    analysis_type -- String describing the type of things to analyze. May contain one or more of the
+        following values:
+        word: Not used in text (this option is for json only).
+        sentence: Include analysis of sentences. This will cause the output to contain an 'object' 
+            element with sentence sentiments.
+        document: Include analysis of the entier document. This will cause the output to contain a
+            'sentiment' element at the root.
+    """
+
     # initialize result
     result = {}
 
@@ -105,14 +124,22 @@ def process_text(text, analysis_type):
 
     return result
 
-# Process a JSON file by assuming it is vtn-standard, and contains a series of words. For each
-# word we will analyse the sentiment as well as each sentence and the whole document. Returns
-# the processed vtn-standard structure
-
-
-
 
 def process_json(data, analysis_type):
+    """Perform sentiment analysis on a vtn-standard json file.
+
+    Adds sentiment analysis for each word, as well as for sentences and the entire document.
+
+    data -- JSON to analyze
+    analysis_type -- String describing the type of things to analyze. May contain one or more of the
+        following values:
+        word: Add sentiment analysis to each word.
+        sentence: Include analysis of sentences. This will cause the output to contain an 'object' 
+            element with sentence sentiments.
+        document: Include analysis of the entier document. This will cause the output to contain a
+            'sentiment' element at the root.
+    """
+
     # assume this is vtn-standard:
     # https://docs.veritone.com/#/developer/engines/standards/engine-output/?id=engine-output-standard-vtn-standard
     if 'series' not in data:
@@ -154,6 +181,8 @@ def process_json(data, analysis_type):
 
 
 def get_sentiment(text):
+    """Perform a sentiment analysis and return the analysis in a format compatible with vtn-standard"""
+
     scores = sia.polarity_scores(text)
     return {
         'positiveValue': scores['pos'],
