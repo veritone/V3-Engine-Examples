@@ -61,6 +61,18 @@ func handleProcess(responseWriter http.ResponseWriter, request *http.Request) {
 
 	printRequest(request)
 
+	// get the payload, which are the parameters that the job creator supplied for this particular
+	// task. this engine doesn't actually need any parameters, but this is how you would get them
+	// if it did
+	var payload map[string]interface{}
+	payloadString, err := getRequestString(request, "payload")
+	if err == nil {
+		json.Unmarshal([]byte(payloadString), &payload)
+	}
+	if verboseLogging {
+		log.Printf("Task payload: %+v", payload)
+	}
+
 	// get (only) the request fields we are going to need for processing or output
 
 	// get start offset, which we need to copy to the output
