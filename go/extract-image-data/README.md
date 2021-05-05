@@ -248,6 +248,9 @@ A template for a new TDO (i.e. uploading)
     },
     {
       "engineId": "{{{ENGINE_ID}}}",
+      "payload": {
+        "verbose": {{#if verbose}} "{{{verbose}}}" {{else}} "true" {{/if}}
+      },
       "executionPreferences": {
         {{#if priority}} "priority":{{{priority}}}, {{/if}}
         "parentCompleteBeforeStarting": true

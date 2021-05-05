@@ -61,16 +61,33 @@ func handleProcess(responseWriter http.ResponseWriter, request *http.Request) {
 
 	printRequest(request)
 
-	// get the payload, which are the parameters that the job creator supplied for this particular
-	// task. this engine doesn't actually need any parameters, but this is how you would get them
-	// if it did
 	var payload map[string]interface{}
-	payloadString, err := getRequestString(request, "payload")
-	if err == nil {
-		json.Unmarshal([]byte(payloadString), &payload)
-	}
-	if verboseLogging {
-		log.Printf("Task payload: %+v", payload)
+	// OPTIONAL: Get the payload, which are the parameters that the job creator supplied for this
+	// particular task. If your engine defines "custom fields" in the Veritone Developer App, the
+	// payload field is where they will be defined. You may also read any other values that the
+	// job creator added to the task definition here, whether they are official fields or not.
+	{ // payload reading code
+		payloadString, err := getRequestString(request, "payload")
+		if err == nil {
+			json.Unmarshal([]byte(payloadString), &payload)
+		}
+		// this engine doesn't have any required parameters, but we will read the value of "verbose"
+		// to allow the creator to determine whether verbose logging should be on or not. By default,
+		// this engine has verbose logging on (because it's a teaching engine), but if you want to
+		// turn off the verbose logging, you can specify
+		// <pre>
+		// "payload" : {
+		//   "verbose": "false"
+		// }
+		// </pre>
+		// in the task definition for this engine
+		if value, ok := payload["verbose"]; ok {
+			verboseLogging = value == "true"
+			log.Printf("Set verbose logging to %v", verboseLogging)
+		}
+		if verboseLogging {
+			log.Printf("Task payload: %+v", payload)
+		}
 	}
 
 	// get (only) the request fields we are going to need for processing or output
