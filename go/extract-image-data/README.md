@@ -152,13 +152,11 @@ mutation {
 
 ### Single engine job templates
 
-| :warning: | At the time of writing, support for templates in <br> the Developer GUI is broken. It is not currently <br> possible to set templates for engines. |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-
 When registering your engine, you can provide single-engine job templates which enable two features:
 
-1. It allows GraphQL clients to invoke your engine with a single, simple call to `launchSingleEngineJob` instead of the more complete `createJob` mutation.
-1. It allows CMS to set up a job for your engine through the GUI.
+1. It allows GraphQL clients to invoke your engine with a single, simple call to
+   `launchSingleEngineJob` instead of the more complete `createJob` mutation.
+2. It allows CMS to set up a job for your engine through the GUI.
 
 Both of these are achieved by using your template to create a whole job in one operation.
 Setting up these templates is non-trivial and detailed information is available in the
