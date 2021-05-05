@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -61,6 +63,7 @@ func handleProcess(responseWriter http.ResponseWriter, request *http.Request) {
 
 	printRequest(request)
 
+	verboseLogging = true
 	var payload map[string]interface{}
 	// OPTIONAL: Get the payload, which are the parameters that the job creator supplied for this
 	// particular task. If your engine defines "custom fields" in the Veritone Developer App, the
@@ -139,14 +142,77 @@ func handleProcess(responseWriter http.ResponseWriter, request *http.Request) {
 
 	// get the exif data from the file in a vtn-standard structure
 	log.Printf("Getting EXIF data for %s", cacheURI)
+	start := time.Now()
 	vtnStandard := getExifDataAsVtnStandard(cacheURIResponse.Body)
+	duration := time.Since(start)
 	vtnStandard.Series[0].StartTimeMs = startMs
 	vtnStandard.Series[0].StopTimeMs = stopMs
+
+	// OPTIONAL: Engines return their values as vtn-standard output in the body of the response,
+	// and they can also log information to the log file. However, if the engine wants to return
+	// some other information that can be viewed later (typically statistics), then it can set
+	// that information by calling the heartbeat webhook. The heartbeat webhook is primarily used
+	// by asynchronous engines to provide status updates back to aiWARE during processing, but it
+	// can also be used to set the `infoMsg` value in the task output data for any kind of engine.
+	// This information is viewable by requesting the `taskOutput` value via GraphQL
+	{
+		// for demonstration purposes, we will set the processing duration in the task
+		heartbeatCallback, err := getRequestString(request, "heartbeatWebhook")
+		if err == nil {
+			sendHeartbeat(heartbeatCallback, "complete", map[string]string{
+				"processingDuration": duration.String(),
+			})
+		}
+
+	}
 
 	// return the response in JSON format
 	if err := json.NewEncoder(responseWriter).Encode(vtnStandard); err != nil {
 		fmt.Fprintf(os.Stderr, "%s", err)
 	}
+}
+
+// sendHeartbeat sends a heartbeat callback to aiWARE, providing information about the task
+// process. In a synchronous engine (like this one), the only viable values of status are
+// "complete" and "failed", and the purpose is to provide additional information to be stored in
+// the task output record. Note that if the status is failed, then you must respond to the main
+// request with a status other than 200 and the body should contain the error message
+func sendHeartbeat(callback string, status string, info map[string]string) {
+	// heartbeat may not be present in all circumstances, like during testing
+	if callback == "" {
+		return
+	}
+
+	// prepare the body of the heartbeat
+	bodyMap := map[string]interface{}{
+		"status":  status,
+		"infoMsg": info,
+	}
+	body, err := json.Marshal(bodyMap)
+	if err != nil {
+		log.Printf("Unable to marshal the heartbeat body: %s\n", err.Error())
+		return
+	}
+
+	// prepare the request
+	req, err := http.NewRequest("POST", callback, bytes.NewReader([]byte(body)))
+	if err != nil {
+		log.Printf("Unable to create heartbeat request: %s\n", err.Error())
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// post the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("Unable to send heartbeat to aiWARE: %s\n", err.Error())
+		return
+	}
+
+	// consume the response
+	io.Copy(ioutil.Discard, resp.Body)
+	resp.Body.Close()
 }
 
 // printRequest will dump all the request information to the logs. This is for debugging or

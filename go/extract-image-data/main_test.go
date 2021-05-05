@@ -167,6 +167,7 @@ func createTestProcessRequestForFile(t *testing.T, fileUrl string, mediaType str
 	formData.Set("endOffsetMS", "2000")
 	formData.Set("chunkMimeType", mediaType)
 	formData.Set("cacheURI", fileUrl)
+	// formData.Set("payload", "{\"verbose\":\"false\"}")
 
 	request, err := http.NewRequest(http.MethodPost, "/process", strings.NewReader(formData.Encode()))
 	if err != nil {
