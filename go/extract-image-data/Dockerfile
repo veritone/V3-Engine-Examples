@@ -20,6 +20,7 @@ ADD manifest.json /var/manifest.json
 # set up the environment variables
 ENV VERITONE_WEBHOOK_READY="http://0.0.0.0:8080/ready"
 ENV VERITONE_WEBHOOK_PROCESS="http://0.0.0.0:8080/process"
+ENV VERITONE_DISABLE_CHUNK_DOWNLOAD=true
 
 EXPOSE 8080
 

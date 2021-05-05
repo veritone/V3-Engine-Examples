@@ -1,7 +1,20 @@
 current_dir = $(shell pwd)
+.DEFAULT_GOAL = build
 
 # Do a clean build of the docker image
-build: clean engine docker
+build: clean test engine docker
+
+clean:
+	rm -rf ./dist
+
+engine:
+	GOOS=linux GOARCH=amd64 go build -o ./dist/exif-extraction-engine
+
+test:
+	go test
+
+docker:
+	docker build -f Dockerfile -t exif-extraction-engine .
 
 # Convenience target to shut down current engine, recompile, reimage, and run it again
 run: down engine docker up
@@ -11,15 +24,6 @@ run-testmode: down engine docker up-testmode
 
 # Convenience target to shut down current engine, recompile, reimage, and run the engine with the file service
 run-fs: down engine docker up-fs
-
-engine:
-	GOOS=linux GOARCH=amd64 go build -o ./dist/exif-extraction-engine
-
-clean:
-	rm -rf ./dist
-
-docker:
-	docker build -f Dockerfile -t exif-extraction-engine .
 
 up:
 	docker run -t exif-extraction-engine --name exif-extraction-engine

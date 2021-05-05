@@ -1,22 +1,20 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/rwcarlsen/goexif/exif"
-	"io"
-	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
-	"path/filepath"
+	"strconv"
+	"strings"
 	"testing"
+
+	"github.com/rwcarlsen/goexif/exif"
 )
 
-/*
-TestExifDataFromJpeg verifies that we can accurately extract data from a JPG file
-*/
+// TestExifDataFromJpeg verifies that we can accurately extract data from a JPG file
 func TestExifDataFromJpeg(t *testing.T) {
 	file, err := os.Open("testdata/animal.jpg")
 	if err != nil {
@@ -44,9 +42,7 @@ func TestExifDataFromJpeg(t *testing.T) {
 	assertThatExifContains(t, vtnStandard.Series[0].Vendor.Exif, exif.XResolution, `"72/1"`)
 }
 
-/*
-TestExifDataFromTiff verifies we can accurately extract data from a TIFF file
-*/
+// TestExifDataFromTiff verifies we can accurately extract data from a TIFF file
 func TestExifDataFromTiff(t *testing.T) {
 	file, err := os.Open("testdata/DudleyLeavittUtah.tiff")
 	if err != nil {
@@ -77,10 +73,8 @@ func TestExifDataFromTiff(t *testing.T) {
 	assertThatExifDoesNotContain(t, vtnStandard.Series[0].Vendor.Exif, exif.GPSDateStamp)
 }
 
-/*
-TestExifDataFromGif verifies that unsupported files (animated GIF) generates the expected error in the
-vtn-standard file, but does not fail to process
- */
+// TestExifDataFromGif verifies that unsupported files (animated GIF) generates the expected
+// error in the vtn-standard file, but does not fail to process
 func TestExifDataFromGif(t *testing.T) {
 	file, err := os.Open("testdata/vulture.gif")
 	if err != nil {
@@ -104,15 +98,17 @@ func TestExifDataFromGif(t *testing.T) {
 	}
 }
 
-/*
-TestProcessHandler tests the process handler by simulating passing in a request file like the Engine Toolkit would
-*/
-func TestProcessHandler(t *testing.T) {
-	request := createTestProcessRequestForFile(t, "testdata/animal.jpg")
+// TestProcessHandler tests the process handler by simulating passing in a request file like the
+// Engine Toolkit would
+func TestProcessHandlerOnJpeg(t *testing.T) {
+	// send a request to our processor
+	imageUri := "https://github.com/veritone/V3-Engine-Examples/blob/master/go/extract-image-data/testdata/animal.jpg?raw=true"
+	request := createTestProcessRequestForFile(t, imageUri, "image/jpeg")
 	response := httptest.NewRecorder()
 	srv := newServer()
 	srv.ServeHTTP(response, request)
 
+	// extract results
 	if response.Code != http.StatusOK {
 		t.Fatalf("got status: %d: %s", response.Code, response.Body.String())
 	}
@@ -120,7 +116,7 @@ func TestProcessHandler(t *testing.T) {
 	if err := json.Unmarshal(response.Body.Bytes(), &jsonMap); err != nil {
 		t.Fatalf("%s", err)
 	}
-	//printJson(jsonMap)
+	// printJson(jsonMap)
 
 	// check the timestamps
 	series := jsonMap["series"].([]interface{})
@@ -136,19 +132,54 @@ func TestProcessHandler(t *testing.T) {
 	vendor := series1["vendor"].(map[string]interface{})
 	exif := vendor["exif"].(map[string]interface{})
 	if exif["DateTime"] != "2008:07:31 10:38:11" {
-		t.Error()
+		t.Errorf("DateTime: expected '2008:07:31 10:38:11' but got '%v'", exif["DateTime"])
 	}
 	if exif["PixelYDimension"].([]interface{})[0].(float64) != 68 {
-		t.Error()
+		t.Errorf("PixelYDimension: expected '68' but got '%v'", exif["PixelYDimension"].([]interface{})[0])
 	}
 	if exif["PixelXDimension"].([]interface{})[0].(float64) != 100 {
-		t.Error()
+		t.Errorf("PixelXDimension: expected '100' but got '%v'", exif["PixelXDimension"].([]interface{})[0])
 	}
 }
 
-/* printJson is a helper function that just prints a pretty-printed version of the object
- * to the console
- */
+// TestProcessHandler tests the process handler by simulating passing in a request for an
+// unsupported file type
+func TestProcessHandlerOnUnsupportedGif(t *testing.T) {
+	// send a request to our processor
+	imageUri := "https://github.com/veritone/V3-Engine-Examples/blob/master/go/extract-image-data/testdata/vulture.gif?raw=true"
+	request := createTestProcessRequestForFile(t, imageUri, "image/gif")
+	response := httptest.NewRecorder()
+	srv := newServer()
+	srv.ServeHTTP(response, request)
+
+	// extract results
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("expected status '400', but got '%v'", response.Code)
+	}
+	if !strings.Contains(response.Body.String(), "media type 'image/gif'") {
+		t.Fatalf("expected error to be that the media type was incorrect, but was '%v'", response.Body.String())
+	}
+}
+
+func createTestProcessRequestForFile(t *testing.T, fileUrl string, mediaType string) *http.Request {
+	formData := url.Values{}
+	formData.Set("startOffsetMS", "1000")
+	formData.Set("endOffsetMS", "2000")
+	formData.Set("chunkMimeType", mediaType)
+	formData.Set("cacheURI", fileUrl)
+
+	request, err := http.NewRequest(http.MethodPost, "/process", strings.NewReader(formData.Encode()))
+	if err != nil {
+		t.Fatalf("%s", err)
+	}
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request.Header.Set("Content-Length", strconv.Itoa(len(formData.Encode())))
+
+	return request
+}
+
+// printJson is a helper function that just prints a pretty-printed version of the object to the
+// console
 func printJson(obj interface{}) {
 	jsonString, _ := json.MarshalIndent(obj, "", "  ")
 	_, _ = os.Stdout.Write(jsonString)
@@ -180,84 +211,3 @@ func assertThatExifDoesNotContain(t *testing.T, exif *exif.Exif, fieldName exif.
 			fieldName, tag.String())
 	}
 }
-
-func createTestProcessRequestForFile(t *testing.T, filePath string) *http.Request {
-	var buf bytes.Buffer
-	m := multipart.NewWriter(&buf)
-	_ = m.WriteField("startOffsetMS", "1000")
-	_ = m.WriteField("endOffsetMS", "2000")
-	f, err := m.CreateFormFile("chunk", filepath.Base(filePath))
-	if err != nil {
-		t.Fatalf("%s", err)
-	}
-	src, err := os.Open(filePath)
-	if err != nil {
-		t.Fatalf("%s", err)
-	}
-	if _, err := io.Copy(f, src); err != nil {
-		t.Fatalf("%s", err)
-	}
-	if err := m.Close(); err != nil {
-		t.Fatalf("%s", err)
-	}
-	request := httptest.NewRequest(http.MethodPost, "/process", &buf)
-	request.Header.Set("Content-Type", m.FormDataContentType())
-
-	return request
-}
-
-const expectedOutput = `{
-	"series": [{
-		"startTimeMs": 1000,
-		"stopTimeMs": 2000,
-		"vendor": {
-			"exif": {
-				"ApertureValue": ["368640/65536"],
-				"ColorSpace": [1],
-				"ComponentsConfiguration": "",
-				"CustomRendered": [0],
-				"DateTime": "2008:07:31 10:38:11",
-				"DateTimeDigitized": "2008:05:30 15:56:01",
-				"DateTimeOriginal": "2008:05:30 15:56:01",
-				"ExifIFDPointer": [214],
-				"ExifVersion": "0221",
-				"ExposureBiasValue": ["0/1"],
-				"ExposureMode": [1],
-				"ExposureProgram": [1],
-				"ExposureTime": ["1/160"],
-				"FNumber": ["71/10"],
-				"Flash": [9],
-				"FlashpixVersion": "0100",
-				"FocalLength": ["135/1"],
-				"FocalPlaneResolutionUnit": [2],
-				"FocalPlaneXResolution": ["3888000/876"],
-				"FocalPlaneYResolution": ["2592000/583"],
-				"GPSInfoIFDPointer": [978],
-				"GPSVersionID": [2, 2, 0, 0],
-				"ISOSpeedRatings": [100],
-				"InteroperabilityIFDPointer": [948],
-				"InteroperabilityIndex": "R98",
-				"Make": "Canon",
-				"MeteringMode": [5],
-				"Model": "Canon EOS 40D",
-				"Orientation": [1],
-				"PixelXDimension": [100],
-				"PixelYDimension": [68],
-				"ResolutionUnit": [2],
-				"SceneCaptureType": [0],
-				"ShutterSpeedValue": ["483328/65536"],
-				"Software": "GIMP 2.4.5",
-				"SubSecTime": "00",
-				"SubSecTimeDigitized": "00",
-				"SubSecTimeOriginal": "00",
-				"ThumbJPEGInterchangeFormat": [1090],
-				"ThumbJPEGInterchangeFormatLength": [1378],
-				"UserComment": "",
-				"WhiteBalance": [0],
-				"XResolution": ["72/1"],
-				"YCbCrPositioning": [2],
-				"YResolution": ["72/1"]
-			}
-		}
-	}]
-}`
