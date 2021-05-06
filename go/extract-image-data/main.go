@@ -194,17 +194,8 @@ func sendHeartbeat(callback string, status string, info map[string]string) {
 		return
 	}
 
-	// prepare the request
-	req, err := http.NewRequest("POST", callback, bytes.NewReader([]byte(body)))
-	if err != nil {
-		log.Printf("Unable to create heartbeat request: %s\n", err.Error())
-		return
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	// post the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	// post the callback
+	resp, err := http.Post(callback,"application/json",bytes.NewReader([]byte(body)))
 	if err != nil {
 		log.Printf("Unable to send heartbeat to aiWARE: %s\n", err.Error())
 		return
