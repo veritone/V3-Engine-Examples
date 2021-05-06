@@ -9,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/rwcarlsen/goexif/exif"
@@ -70,8 +69,8 @@ func handleProcess(responseWriter http.ResponseWriter, request *http.Request) {
 	// payload field is where they will be defined. You may also read any other values that the
 	// job creator added to the task definition here, whether they are official fields or not.
 	{ // payload reading code
-		payloadString, err := getRequestString(request, "payload")
-		if err == nil {
+		payloadString := request.FormValue("payload")
+		if payloadString != "" {
 			json.Unmarshal([]byte(payloadString), &payload)
 		}
 		// this engine doesn't have any required parameters, but we will read the value of "verbose"
@@ -95,37 +94,23 @@ func handleProcess(responseWriter http.ResponseWriter, request *http.Request) {
 
 	// get (only) the request fields we are going to need for processing or output
 
-	// get start offset, which we need to copy to the output
-	startMs, err := getRequestInteger(request, "startOffsetMS")
-	if err != nil {
-		http.Error(responseWriter, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	// get the stop offset, which we need to copy to the output
-	stopMs, err := getRequestInteger(request, "endOffsetMS")
-	if err != nil {
-		http.Error(responseWriter, err.Error(), http.StatusBadRequest)
-		return
-	}
-
 	// verify the media type of the input file
-	mediaType, err := getRequestString(request, "chunkMimeType")
-	if err != nil {
-		http.Error(responseWriter, err.Error(), http.StatusBadRequest)
+	mediaType := request.FormValue("chunkMimeType")
+	if mediaType == "" {
+		http.Error(responseWriter, fmt.Sprintf("Input file has no Media Type: Field 'chunkMimeType' is missing"), http.StatusBadRequest)
 		return
 	}
 	if mediaType != "image/jpeg" && mediaType != "image/tiff" {
-		http.Error(responseWriter, fmt.Sprintf("Chunk has media type '%s'. Supported types are ['image/jpeg', 'image/tiff']", mediaType),
+		http.Error(responseWriter, fmt.Sprintf("Invalid file type: File has media type '%s'. Supported types are ['image/jpeg', 'image/tiff']", mediaType),
 			http.StatusBadRequest)
 		return
 	}
 
 	// get the URL of the file we need to process
-	cacheURI, err := getRequestString(request, "cacheURI")
-	if err != nil {
+	cacheURI := request.FormValue("cacheURI")
+	if cacheURI == "" {
 		http.Error(responseWriter,
-			fmt.Sprintf("Field cacheURI could not be read so there is nothing to process: %v", err.Error()),
+			fmt.Sprintf("File not found: Field 'cacheURI' is missing"),
 			http.StatusBadRequest)
 		return
 	}
@@ -145,8 +130,6 @@ func handleProcess(responseWriter http.ResponseWriter, request *http.Request) {
 	start := time.Now()
 	vtnStandard := getExifDataAsVtnStandard(cacheURIResponse.Body)
 	duration := time.Since(start)
-	vtnStandard.Series[0].StartTimeMs = startMs
-	vtnStandard.Series[0].StopTimeMs = stopMs
 
 	// OPTIONAL: Engines return their values as vtn-standard output in the body of the response,
 	// and they can also log information to the log file. However, if the engine wants to return
@@ -157,12 +140,10 @@ func handleProcess(responseWriter http.ResponseWriter, request *http.Request) {
 	// This information is viewable by requesting the `taskOutput` value via GraphQL
 	{
 		// for demonstration purposes, we will set the processing duration in the task
-		heartbeatCallback, err := getRequestString(request, "heartbeatWebhook")
-		if err == nil {
-			sendHeartbeat(heartbeatCallback, "complete", map[string]string{
-				"processingDuration": duration.String(),
-			})
-		}
+		heartbeatCallback := request.FormValue("heartbeatWebhook")
+		sendHeartbeat(heartbeatCallback, "complete", map[string]string{
+			"processingDuration": duration.String(),
+		})
 
 	}
 
@@ -195,15 +176,15 @@ func sendHeartbeat(callback string, status string, info map[string]string) {
 	}
 
 	// post the callback
-	resp, err := http.Post(callback,"application/json",bytes.NewReader([]byte(body)))
+	resp, err := http.Post(callback, "application/json", bytes.NewReader([]byte(body)))
 	if err != nil {
 		log.Printf("Unable to send heartbeat to aiWARE: %s\n", err.Error())
 		return
 	}
 
 	// consume the response
+	defer resp.Body.Close()
 	io.Copy(ioutil.Discard, resp.Body)
-	resp.Body.Close()
 }
 
 // printRequest will dump all the request information to the logs. This is for debugging or
@@ -234,43 +215,19 @@ func printRequest(request *http.Request) {
 	}
 }
 
-// getRequestString is a convenience method for extracting a string from a request form
-func getRequestString(r *http.Request, fieldName string) (string, error) {
-	value := r.FormValue(fieldName)
-	if value == "" {
-		return "", fmt.Errorf("field '%s' could not be found in the request", fieldName)
-	}
-
-	return value, nil
-}
-
-// getRequestInteger is a convenience method for extracting an integer from a request form
-func getRequestInteger(r *http.Request, fieldName string) (int, error) {
-	value, err := getRequestString(r, fieldName)
-	if err != nil {
-		return 0, err
-	}
-
-	intValue, err := strconv.Atoi(value)
-	if err != nil {
-		return 0, fmt.Errorf("field %s ('%s') could not be converted to an integer: %v", fieldName, value, err.Error())
-	}
-
-	return intValue, nil
-}
-
 // getExifDataAsVtnStandard extracts the EXIF data from a file and returns it wrapped in a
 // vtn-standard structure. Any errors extracting the EXIF data will be encoded into the
 // structure but not returned explicitly. file is not closed by this function
 func getExifDataAsVtnStandard(file io.Reader) vtnStandard {
 	var vtnStandard vtnStandard
-	vtnStandard.Series = make([]vtnSeries, 1)
+	vtnStandard.Object = make([]vtnObject, 1)
 
 	exifData, err := exif.Decode(file)
-	vtnStandard.Series[0].Vendor.Exif = exifData
+	vtnStandard.Object[0].Vendor.Exif = exifData
 	if err != nil {
-		vtnStandard.Series[0].Vendor.ExifError = err.Error()
+		vtnStandard.Object[0].Vendor.ExifError = err.Error()
 	}
+
 	return vtnStandard
 }
 
@@ -279,13 +236,11 @@ func getExifDataAsVtnStandard(file io.Reader) vtnStandard {
 // This does not define the entire vtn-standard, just barely enough to represent the exif data
 // as a custom vendor structure
 type vtnStandard struct {
-	Series []vtnSeries `json:"series"`
+	Object []vtnObject `json:"object"`
 }
 
-type vtnSeries struct {
-	StartTimeMs int       `json:"startTimeMs"`
-	StopTimeMs  int       `json:"stopTimeMs"`
-	Vendor      vtnVendor `json:"vendor"`
+type vtnObject struct {
+	Vendor vtnVendor `json:"vendor"`
 }
 
 type vtnVendor struct {

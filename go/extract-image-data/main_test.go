@@ -24,22 +24,16 @@ func TestExifDataFromJpeg(t *testing.T) {
 	vtnStandard := getExifDataAsVtnStandard(file)
 	//printJson(vtnStandard)
 
-	if len(vtnStandard.Series) != 1 {
-		t.Fatalf("Should have 1 series, but has %d", len(vtnStandard.Series))
+	if len(vtnStandard.Object) != 1 {
+		t.Fatalf("Should have 1 series, but has %d", len(vtnStandard.Object))
 	}
-	if vtnStandard.Series[0].StartTimeMs != 0 {
-		t.Fatalf("Start time should be 0, but is %d", vtnStandard.Series[0].StartTimeMs)
-	}
-	if vtnStandard.Series[0].StopTimeMs != 0 {
-		t.Fatalf("Stop time should be 0, but is %d", vtnStandard.Series[0].StopTimeMs)
-	}
-	if vtnStandard.Series[0].Vendor.ExifError != "" {
-		t.Fatalf("Exif error: %s", vtnStandard.Series[0].Vendor.ExifError)
+	if vtnStandard.Object[0].Vendor.ExifError != "" {
+		t.Fatalf("Exif error: %s", vtnStandard.Object[0].Vendor.ExifError)
 	}
 
 	// spot check a couple of values
-	assertThatExifContains(t, vtnStandard.Series[0].Vendor.Exif, exif.DateTime, `"2008:07:31 10:38:11"`)
-	assertThatExifContains(t, vtnStandard.Series[0].Vendor.Exif, exif.XResolution, `"72/1"`)
+	assertThatExifContains(t, vtnStandard.Object[0].Vendor.Exif, exif.DateTime, `"2008:07:31 10:38:11"`)
+	assertThatExifContains(t, vtnStandard.Object[0].Vendor.Exif, exif.XResolution, `"72/1"`)
 }
 
 // TestExifDataFromTiff verifies we can accurately extract data from a TIFF file
@@ -52,25 +46,19 @@ func TestExifDataFromTiff(t *testing.T) {
 	vtnStandard := getExifDataAsVtnStandard(file)
 	//printJson(vtnStandard)
 
-	if len(vtnStandard.Series) != 1 {
-		t.Fatalf("Should have 1 series, but has %d", len(vtnStandard.Series))
+	if len(vtnStandard.Object) != 1 {
+		t.Fatalf("Should have 1 series, but has %d", len(vtnStandard.Object))
 	}
-	if vtnStandard.Series[0].StartTimeMs != 0 {
-		t.Fatalf("Start time should be 0, but is %d", vtnStandard.Series[0].StartTimeMs)
-	}
-	if vtnStandard.Series[0].StopTimeMs != 0 {
-		t.Fatalf("Stop time should be 0, but is %d", vtnStandard.Series[0].StopTimeMs)
-	}
-	if vtnStandard.Series[0].Vendor.ExifError != "" {
-		t.Fatalf("Exif error: %s", vtnStandard.Series[0].Vendor.ExifError)
+	if vtnStandard.Object[0].Vendor.ExifError != "" {
+		t.Fatalf("Exif error: %s", vtnStandard.Object[0].Vendor.ExifError)
 	}
 
 	// spot check a couple of values
-	assertThatExifContains(t, vtnStandard.Series[0].Vendor.Exif, exif.Orientation, "1")
-	assertThatExifContains(t, vtnStandard.Series[0].Vendor.Exif, exif.ImageWidth, "196")
-	assertThatExifContains(t, vtnStandard.Series[0].Vendor.Exif, exif.ImageLength, "257")
-	assertThatExifContains(t, vtnStandard.Series[0].Vendor.Exif, exif.DateTime, `"2009:09:26 01:11:52"`)
-	assertThatExifDoesNotContain(t, vtnStandard.Series[0].Vendor.Exif, exif.GPSDateStamp)
+	assertThatExifContains(t, vtnStandard.Object[0].Vendor.Exif, exif.Orientation, "1")
+	assertThatExifContains(t, vtnStandard.Object[0].Vendor.Exif, exif.ImageWidth, "196")
+	assertThatExifContains(t, vtnStandard.Object[0].Vendor.Exif, exif.ImageLength, "257")
+	assertThatExifContains(t, vtnStandard.Object[0].Vendor.Exif, exif.DateTime, `"2009:09:26 01:11:52"`)
+	assertThatExifDoesNotContain(t, vtnStandard.Object[0].Vendor.Exif, exif.GPSDateStamp)
 }
 
 // TestExifDataFromGif verifies that unsupported files (animated GIF) generates the expected
@@ -84,16 +72,10 @@ func TestExifDataFromGif(t *testing.T) {
 	vtnStandard := getExifDataAsVtnStandard(file)
 	//printJson(vtnStandard)
 
-	if len(vtnStandard.Series) != 1 {
-		t.Fatalf("Should have 1 series, but has %d", len(vtnStandard.Series))
+	if len(vtnStandard.Object) != 1 {
+		t.Fatalf("Should have 1 series, but has %d", len(vtnStandard.Object))
 	}
-	if vtnStandard.Series[0].StartTimeMs != 0 {
-		t.Fatalf("Start time should be 0, but is %d", vtnStandard.Series[0].StartTimeMs)
-	}
-	if vtnStandard.Series[0].StopTimeMs != 0 {
-		t.Fatalf("Stop time should be 0, but is %d", vtnStandard.Series[0].StopTimeMs)
-	}
-	if vtnStandard.Series[0].Vendor.ExifError != "exif: failed to find exif intro marker" {
+	if vtnStandard.Object[0].Vendor.ExifError != "exif: failed to find exif intro marker" {
 		t.Fatalf("EXIF extraction should have failed, but did not")
 	}
 }
@@ -119,17 +101,11 @@ func TestProcessHandlerOnJpeg(t *testing.T) {
 	// printJson(jsonMap)
 
 	// check the timestamps
-	series := jsonMap["series"].([]interface{})
-	series1 := series[0].(map[string]interface{})
-	if series1["startTimeMs"].(float64) != 1000 {
-		t.Error()
-	}
-	if series1["stopTimeMs"].(float64) != 2000 {
-		t.Error()
-	}
+	obj := jsonMap["object"].([]interface{})
+	obj1 := obj[0].(map[string]interface{})
 
 	// spot-check the exif values
-	vendor := series1["vendor"].(map[string]interface{})
+	vendor := obj1["vendor"].(map[string]interface{})
 	exif := vendor["exif"].(map[string]interface{})
 	if exif["DateTime"] != "2008:07:31 10:38:11" {
 		t.Errorf("DateTime: expected '2008:07:31 10:38:11' but got '%v'", exif["DateTime"])
