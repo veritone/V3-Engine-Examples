@@ -1,6 +1,6 @@
 {
-  "engineId": "YOUR_ENGINE_ID",
-  "url": "YOUR_URL",
+  "engineId": "YOUR-ENGINE-ID",
+  "url": "https://github.com/YOUR-ENGINE-URL",
   "category": "Sentiment",
   "externalCalls": [],
   "outputFormats": ["application/json"],

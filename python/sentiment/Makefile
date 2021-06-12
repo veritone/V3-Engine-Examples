@@ -1,8 +1,7 @@
-# Template Makefile
-# Adjust this Makefile to suit your engine's needs, but this template includes
+# Adjust this Makefile to suit your engine's needs.
 
 # Name of this engine as provided by the Veritone Developer App under the build instructions
-VDA_NAME = "sentiment-sample-chunk-v-3"
+ENGINE_NAME = "YOUR-ENGINE-NAME"
 
 #
 # BUILDING targets
@@ -35,18 +34,11 @@ test: install
 #
 # ENGINE targets
 #
-.PHONY: engine docker test-image publish deploy deploy-%
+.PHONY: engine docker
 
 ## Build the engine
 engine: compile
 
 ## Build the docker image
 docker: 
-	docker build --tag=${VDA_NAME} .
-
-# start the engine in the test framework
-up-test:
-	docker run --rm -e "VERITONE_TESTMODE=true" -p 9090:9090 -p 8080:8080 $(VDA_NAME)
-
-# rebuild and start the engine in the test framework
-up-retest: docker up-test
+	docker build --tag=${ENGINE_NAME} .
