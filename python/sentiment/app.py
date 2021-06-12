@@ -120,9 +120,9 @@ def process_text(text, analysis_type):
             sentence_index += 1
             result['object'].append({
                 'type': 'text',
+                'sentence': sentence_index,
                 'text': sentence,
-                'sentiment': get_sentiment(sentence),
-                'sentence':sentence_index
+                'sentiment': get_sentiment(sentence)
             })
 
     return result

@@ -125,7 +125,7 @@ to pause here and get the engine ready. However, we did this part first because 
 know your Engine ID in order to configure your engine correctly. Under the engine name will be the UUID
 of your engine. Copy this value.
 
-## Get started
+## Configure and build the engine
 
 1. Clone this project from github to your local machine.
 2. `cd` to the directory with this README
@@ -144,19 +144,19 @@ of your engine. Copy this value.
 5. Run `make test` to verify that the unit tests pass
 6. Run `make docker` to build the docker image for the engine
 
-Once you have successfully run `make docker` you can run `docker images` and will see your image
+Once you have successfully run `make docker` you can run `docker images` and will see your image.
 
 ## Upload your engine to Veritone
 
-Now that your engine is built and registred with Veritone, you need to upload it to the Veritone docker repository.
+Now that your engine is built and registered with Veritone, you need to upload it to the Veritone docker repository.
 On developer.veritone.com, go to engines and search for your engine.
 Click on it and you will see instructions on how to do this, so just follow them.
 
 Note that the name of your engine in the repository may be different from the default name included in this sample.
 The Veritone name is derived from the name you typed during registration.
 
-Also note that your engine will be identified as yours by the engineID in the manifest file, so ensure your 
-manifest.json file matches the website.
+Also note that your engine will be identified as yours by the engineID in the manifest file (not
+be the image name), so ensure your manifest.json file matches the website.
 
 ## Deploy your engine
 
@@ -167,11 +167,6 @@ After you have pushed your engine to the docker.veritone.com repository.
 3. When your engine is approved, click "DEPLOY" to make it live in the aiWARE ecosystem.
 
 ## Test your engine
-
-### Locally
-
-You can test the engine locally by running `make up-test` and going to http://localhost:9090/.
-Fill out the MIME type, and cacheURI fields (cacheURI is under "Set advanced fields") and click "Submit request"
 
 ### In the Veritone ecosystem
 
