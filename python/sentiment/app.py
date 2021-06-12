@@ -115,11 +115,14 @@ def process_text(text, analysis_type):
         app.logger.info('Analyzing {} sentences'.format(len(sentences)))
 
         # create analysis object for each sentence
+        sentence_index = 0
         for sentence in sentences:
+            sentence_index += 1
             result['object'].append({
                 'type': 'text',
                 'text': sentence,
-                'sentiment': get_sentiment(sentence)
+                'sentiment': get_sentiment(sentence),
+                'sentence':sentence_index
             })
 
     return result
